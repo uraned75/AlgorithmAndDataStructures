@@ -1,12 +1,46 @@
-﻿namespace GuessTheNumber
+namespace GuessTheNumber
 {
     internal class Program
     {
-        /// <summary>
-        /// Выводит информацию о наименьшем, наибольшем и среднем числе листа
-        /// </summary>
-        /// <param name="userGuesses">Целочисленный лист, из которого надо получить информацию</param>
-        static void DataAnalyzer(List<int> userGuesses)
+        static int gameCount = 1;
+        static int attempts = 0;
+        static bool repeatFlag = false;
+        static bool wonFlag = false;
+        static List<int> userGuesses = new List<int>();
+        static int leftRange = 1;
+        static int rightRange = 100;
+
+        public static int GetNumber()
+        {
+            int number;
+            if (!int.TryParse(Console.ReadLine(), out number)){
+                Console.WriteLine("You'll be stuck here until you'll write a correct number");
+                int.TryParse(Console.ReadLine(), out number);
+            }
+
+            return number;
+        }
+
+        public static string CompareNumber(int currentNum, int randomNum)
+        {
+            if (currentNum < randomNum)
+            {
+                return "Your number is lesser than the guessed number";
+            }
+            else if (currentNum > randomNum)
+            {
+                return "Your number is greater than the guessed number";
+            }
+            else
+            {
+                return "YOU WON, JEREMY. I'M PROUD OF YOU.\n";
+            }
+        }
+            /// <summary>
+            /// Выводит информацию о наименьшем, наибольшем и среднем числе листа
+            /// </summary>
+            /// <param name="userGuesses">Целочисленный лист, из которого надо получить информацию</param>
+            static void DataAnalyzer()
         {
             Console.WriteLine($"Your lowest guess - {userGuesses.Min()}, Your highest guess - {userGuesses.Max()}, Your average guess - {userGuesses.Average()}");
         }
@@ -15,17 +49,12 @@
         /// </summary>
         /// <param name="gameCount">Показывает какая сессия на данный момент </param>
         /// <returns>Количество попыток указанных пользователем</returns>
-        static int GameIntro(int gameCount)
+        static int StartGame()
         {
-            int attempts;
 
             Console.WriteLine($"Hello Jeremy.\nIt is time for a game. The guessing game. Current Game count is {gameCount}\n");
             Console.WriteLine("How many attempts do you want, Jeremy?");
-            if (!int.TryParse(Console.ReadLine(), out attempts) || (attempts < 1))
-            {
-                Console.WriteLine("ARE YOU TO STUPID TO EVEN INPUT CORRECT NUMBER OF ATTEMPTS?");
-                GameIntro(gameCount);
-            }
+            attempts = GetNumber();
             Console.WriteLine($"You have {attempts} attempts, Jeremy.\nIf you won't guess the number in the alloted amount," +
                 "you'll have less than ideal experience.");
             return attempts;
@@ -35,46 +64,22 @@
         /// </summary>
         /// <param name="attempts">Количество попыток указанных пользователем</param>
         /// <returns>Лист со всеми загаданными числами пользователем</returns>
-        static List<int> TheCycleClass(int attempts)
+        static List<int> PlayGame()
         {
             Random rnd = new Random();
-            int currentNum;
-            List<int> usersGuesses = new List<int>();
-            bool wonFlag = false;
+            int? currentNum;
 
-            int randomNum = rnd.Next(1, 101);
-            Console.WriteLine("Write an number between 1 and 100, Jeremy");
+            int randomNum = rnd.Next(leftRange, rightRange);
+            Console.WriteLine($"Write an number between {leftRange} and {rightRange}, Jeremy");
             for (int i = 0; i < attempts; i++)
             {
-                if (!int.TryParse(Console.ReadLine(), out currentNum) || (currentNum < 1 || currentNum > 100))
-                {
-                    Console.WriteLine("JEREMY! YOU IDIOT! I TOLD YOU TO WRITE A NUMBER BETWEEN 1 AND A 100. TRY AGAIN.");
-                    continue;
-                }
-                else
-                {
-                    usersGuesses.Add(currentNum);
-                    if (currentNum < randomNum)
-                    {
-                        Console.WriteLine("Your number is lesser than the guessed number");
-                    }
-                    else if (currentNum > randomNum)
-                    {
-                        Console.WriteLine("Your number is greater than the guessed number");
-                    }
-                    else
-                    {
-                        Console.WriteLine("YOU WON, JEREMY. I'M PROUD OF YOU.\n");
-                        wonFlag = true;
-                        break;
-                    }
-                }
+                currentNum = GetNumber();
+                Console.WriteLine(CompareNumber((int)currentNum, randomNum));
+                userGuesses.Add(currentNum.Value);
+                if (wonFlag) return userGuesses;
             }
-            if (!wonFlag)
-            {
-                Console.WriteLine("YOU ARE AN IMBECILE, JEREMY. PRAY GOOD BYE TO YOUR PENSION PLAN!");
-            }
-            return usersGuesses;
+            if (!wonFlag) Console.WriteLine("YOU ARE AN IMBECILE, JEREMY. PRAY GOOD BYE TO YOUR PENSION PLAN!");
+            return userGuesses;
         }
         /// <summary>
         /// Проверка на то если пользователь хочет продолжать игру
@@ -83,36 +88,40 @@
         static bool Repeat()
         {
             char exitKey;
-            bool toRepeat = false;
 
             Console.WriteLine("Do you want to try again, Jeremy? Press 'Y' to try again or press any other button to quit.");
 
             exitKey = Console.ReadLine().ToLower().FirstOrDefault();
 
             if (exitKey == 'y')
-                return toRepeat = true;
-            return toRepeat;
+                return repeatFlag = true;
+            return repeatFlag;
         }
         static void Main(string[] args)
         {
-            int gameCount = 1;
-            int attempts;
-            bool repeatFlag = false;
-            List<int> userGuesses = new List<int>();
-
-            do
+            try
             {
-                Console.WriteLine("--------------------------------------------------------------");
-                attempts = GameIntro(gameCount);
-                userGuesses = TheCycleClass(attempts);
-                DataAnalyzer(userGuesses);
-                Console.WriteLine("--------------------------------------------------------------");
-                repeatFlag = Repeat();
-                gameCount++;
-            }
-            while (repeatFlag);
+                do
+                {
+                    repeatFlag = false;
+                    wonFlag = false;
+                    Console.WriteLine("--------------------------------------------------------------");
+                    StartGame();
+                    PlayGame();
+                    DataAnalyzer();
+                    Console.WriteLine("--------------------------------------------------------------");
+                    Repeat();
+                    gameCount++;
+                }
+                while (repeatFlag);
 
-            Console.WriteLine("You quit the game");
+                Console.WriteLine("You quit the game");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
         }
     }
 }
